@@ -9,7 +9,7 @@ def get_client_base():
 
     return base
 
-def get_hw_base():
+def get_engine_base():
     module = "hw.dll"
     base_file = process / "modules" / module / "base.txt"
     base = int(base_file.read_text().strip(), 16)
