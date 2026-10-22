@@ -12,3 +12,11 @@ Follow the guide at the [MemProcFS Wiki](https://github.com/ufrisk/MemProcFS/wik
 ## Mount FS
 `sudo memprocfs -device fpga -memmap auto -mount /mnt`
 
+## Search patterm
+Example for the string it generate
+```
+python3 scan.py /mnt/name/testbinary.exe-6448 --prefix "53 74 72 69 6E 67 3A 20" --pattern "$(printf '?? %.0s' {1..31})" --suffix "0D 0A"
+Target VA: 0xE03DFFDF29 (unnamed)
+Hex:  53 75 78 6d 53 70 77 6a 62 4c 4a 47 6c 69 61 4a 4f 6c 79 45 72 5a 53 6d 57 4c 66 4b 57 71 41
+```
+
