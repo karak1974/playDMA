@@ -8,7 +8,6 @@ PTE = re.compile(
     r'([0-9a-fA-F]+)-([0-9a-fA-F]+)\s+([-rwx]+)(?:\s+(.*))?$'
 )
 
-
 def hex_regex(value, max_star=256, allow_star=False):
     parts = []
     maximum = 0
@@ -26,7 +25,6 @@ def hex_regex(value, max_star=256, allow_star=False):
             raise ValueError(f'Invalid token: {token!r} (use hex, ??, or * in --pattern)')
     return b''.join(parts), maximum
 
-
 def regions(path, executable, scope):
     for line in path.read_text(errors='replace').splitlines():
         match = PTE.match(line)
@@ -42,7 +40,6 @@ def regions(path, executable, scope):
             (scope == 'both' and (image or writable))
         ):
             yield int(first, 16), int(last, 16) + 1, name
-
 
 def scan(process, prefix, target, suffix, scope, max_star):
     if not target.strip():
@@ -85,7 +82,6 @@ def scan(process, prefix, target, suffix, scope, max_star):
 
     print(f'Matches: {count}')
 
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('process_dir', type=Path)
@@ -103,7 +99,5 @@ def main():
     except ValueError as exc:
         parser.error(str(exc))
 
-
 if __name__ == '__main__':
     main()
-

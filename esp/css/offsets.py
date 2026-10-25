@@ -17,5 +17,3 @@ class Offsets:
     M_fFlags = 0x440
     M_iCrosshairId = 0x1B20
     M_flFlashMaxAlpha = 0x1A54
-
-# Shoutout for [Julian Ozel Rose](https://github.com/JulianOzelRose) for sharing the offsets on the internet and saving me time
