@@ -25,30 +25,33 @@ def main():
     try:
         process = vmm.process("cstrike_win64.exe")
         client_base = process.module("client.dll").base
+        engine_base = process.module("engine.dll").base
         mappings = process.maps.pte()
 
-        # Local player pointer
-        pointer_address = client_base + Offsets.LocalPlayer
+        client_pointer_address = client_base + Offsets.LocalPlayer
+        engine_pointer_address = engine_base
 
-        if not mapped(mappings, pointer_address, 8):
+        if not mapped(mappings, client_pointer_address, 8):
             raise RuntimeError("Player pointer address not mapped")
 
-        player = read(process, pointer_address, "<Q")
+        player = read(process, client_pointer_address, "<Q")
 
         if not mapped(mappings, player):
             raise RuntimeError("Invalid player pointer")
 
-        print(f"PID:         {process.pid}")
+        print(f"PID: {process.pid}")
         print(f"Client base: 0x{client_base:X}")
-        print(f"Player:      0x{player:X}")
+        print(f"Player base: 0x{player:X}")
 
-        # Player values
         fields = {
-            "Health": (Offsets.M_iHealth, "<i"),
+            "Health": (player, Offsets.M_iHealth, "<i"),
+            "TeamNum": (player, Offsets.M_iTeamNum, "<i"),
+            "CrosshairID": (player, Offsets.M_iCrosshairId, "<i"),
+            "NumPlayers": (engine_base, Offsets.M_iNumPlayers, "<I"),
         }
 
-        for name, (offset, fmt) in fields.items():
-            address = player + offset
+        for name, (base, offset, fmt) in fields.items():
+            address = base + offset
             size = struct.calcsize(fmt)
 
             if not mapped(mappings, address, size):
@@ -57,6 +60,8 @@ def main():
 
             value = read(process, address, fmt)
             print(f"{name}: {value}")
+            if name == "TeamNum":
+                print(f"Team: {Offsets.get_team(int(value))}")
 
     finally:
         vmm.close()

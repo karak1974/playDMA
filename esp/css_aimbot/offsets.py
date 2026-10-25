@@ -15,5 +15,16 @@ class Offsets:
     M_iTeamNum = 0xD8
     M_vecOrigin = 0x320
     M_fFlags = 0x440
-    M_iCrosshairId = 0x1B20
+    M_iCrosshairId = 0x1B20 # 0 = nothing, 1-64 target
     M_flFlashMaxAlpha = 0x1A54
+
+    def get_team(team_number):
+        match team_number:
+            case 1:
+                return "Spectator"
+            case 2:
+                return "T"
+            case 3:
+                return "CT"
+            case _:
+                return "Unknown"
