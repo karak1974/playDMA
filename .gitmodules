@@ -1,0 +1,9 @@
+[submodule "tools/LeechCore"]
+	path = tools/LeechCore
+	url = git@github.com:ufrisk/LeechCore
+[submodule "tools/MemProcFS"]
+	path = tools/MemProcFS
+	url = git@github.com:ufrisk/memprocfs
+[submodule "tools/pcileech"]
+	path = tools/pcileech
+	url = git@github.com:ufrisk/pcileech
