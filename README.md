@@ -19,5 +19,5 @@ Hex:  53 75 78 6d 53 70 77 6a 62 4c 4a 47 6c 69 61 4a 4f 6c 79 45 72 5a 53 6d 57
 ```
 
 ## ESP
-The esp folder contains the most recent updates in this project, there will be every ESP project I will develop when I have free time.
+The [ESP](/esp) folder contains the most recent updates in this project, there will be every ESP project I will develop when I have free time.
 
