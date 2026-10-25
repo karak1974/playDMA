@@ -11,7 +11,7 @@ Follow the guide at the [MemProcFS Wiki](https://github.com/ufrisk/MemProcFS/wik
 `sudo memprocfs -device fpga -memmap auto -mount /mnt`
 
 ## Search patterm
-Example for the string the [testbinary](/testbinary) generate
+Example for the string the [test binary](/test_binary) generate
 ```
 python3 scan.py /mnt/name/testbinary.exe-6448 --prefix "53 74 72 69 6E 67 3A 20" --pattern "$(printf '?? %.0s' {1..31})" --suffix "0D 0A"
 Target VA: 0xE03DFFDF29 (unnamed)
