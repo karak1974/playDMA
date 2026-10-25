@@ -2,7 +2,7 @@ class Offsets:
     # client.dll
     LocalPlayer = 0x5F4B98
     EntityList = 0x6098F8 # List of players
-    Entity_loop_distance = 0x10 # Distance between each player data structure
+    Entity_loop_distance = 0x20 # Distance between each player data structure
     ForceAttack = 0x676DF0
     ForceJump = 0x676DE0
 
