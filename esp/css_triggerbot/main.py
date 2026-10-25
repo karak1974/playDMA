@@ -4,24 +4,8 @@ import struct
 import memprocfs
 from offsets import Offsets
 
-def read_memory(process, mappings, address, fmt):
-    size = struct.calcsize(fmt)
-
-    if not mapped(mappings, address, size):
-        return None
-
-    try:
-        data = process.memory.read(
-            address, size, memprocfs.FLAG_NOCACHE
-        )
-
-        if len(data) != size:
-            return None
-
-        return struct.unpack(fmt, data)[0]
-
-    except (RuntimeError, OSError):
-        return None
+ATTACK_PRESS = 5
+ATTACK_RELEASE = 4
 
 def mapped(mappings, address, size=1):
     return any(
@@ -29,6 +13,24 @@ def mapped(mappings, address, size=1):
         and address + size <= m["va"] + m["size"]
         for m in mappings
     )
+
+def read_memory(process, mappings, address, fmt="<I"):
+    size = struct.calcsize(fmt)
+
+    if not mapped(mappings, address, size):
+        return None
+
+    try:
+        data = process.memory.read(address, size, memprocfs.FLAG_NOCACHE)
+        return struct.unpack(fmt, data)[0] if len(data) == size else None
+    except (RuntimeError, OSError):
+        return None
+
+def write_memory(process, mappings, address, value):
+    if not mapped(mappings, address, 4):
+        raise RuntimeError(f"Unmapped address: 0x{address:X}")
+
+    process.memory.write(address, struct.pack("<I", value))
 
 def main():
     vmm = memprocfs.Vmm(["-device", "fpga", "-memmap", "auto"])
@@ -39,78 +41,73 @@ def main():
         engine_base = process.module("engine.dll").base
         mappings = process.maps.pte()
 
+        player_address = client_base + Offsets.LocalPlayer
+        attack_address = client_base + Offsets.ForceAttack
+
         while True:
-            player = read_memory(
-                process, mappings,
-                client_base + Offsets.LocalPlayer, "<Q"
-            )
-
-            print("\033[H\033[J", end="")
-
-            print(f"PID:         {process.pid}")
-            print(f"Client base: 0x{client_base:X}")
-            print(f"Player:      {hex(player) if player else 'unavailable'}")
-            print()
+            player = read_memory(process, mappings, player_address, "<Q")
 
             if not player or not mapped(mappings, player):
-                print("Player unavailable")
-                time.sleep(0.5)
+                mappings = process.maps.pte()
+                time.sleep(0.1)
                 continue
 
             fields = {
-                "Health":      (player, Offsets.M_iHealth, "<i"),
-                "TeamNum":     (player, Offsets.M_iTeamNum, "<i"),
+                "Health": (player, Offsets.M_iHealth, "<i"),
+                "TeamNum": (player, Offsets.M_iTeamNum, "<I"),
                 "CrosshairID": (player, Offsets.M_iCrosshairId, "<i"),
-                "NumPlayers":  (engine_base, Offsets.M_iNumPlayers, "<I"),
+                "NumPlayers": (engine_base, Offsets.M_iNumPlayers, "<I"),
             }
 
-            values = {}
+            values = {
+                name: read_memory(process, mappings, base + offset, fmt)
+                for name, (base, offset, fmt) in fields.items()
+            }
 
-            for name, (base, offset, fmt) in fields.items():
-                value = read_memory(
-                    process, mappings, base + offset, fmt
-                )
-
-                values[name] = value
-                print(f"{name}: {value if value is not None else 'unavailable'}")
-
+            player_team = values["TeamNum"]
             crosshair_id = values["CrosshairID"]
 
-            if crosshair_id is not None and crosshair_id > 0:
+            target_entity = None
+            target_team = None
+
+            if player_team in (2, 3) and crosshair_id is not None and 1 <= crosshair_id <= 64:
                 entity_address = (
                     client_base
                     + Offsets.EntityList
                     + (crosshair_id - 1) * Offsets.Entity_loop_distance
                 )
 
-                target_entity = read_memory(
-                    process, mappings, entity_address, "<Q"
-                )
+                target_entity = read_memory(process, mappings, entity_address, "<Q")
 
-                if target_entity:
-                    target_team = read_memory(
-                        process, mappings,
-                        target_entity + Offsets.M_iTeamNum, "<I"
-                    )
+                if target_entity and target_entity != player:
+                    target_team = read_memory(process, mappings, target_entity + Offsets.M_iTeamNum)
 
-                    player_team = read_memory(
-                        process, mappings,
-                        player + Offsets.M_iTeamNum, "<I"
-                    )
+                    # Only attack enemies
+                    if target_team in (2, 3) and player_team != target_team:
 
-                    print(f"Target team: {target_team}")
-                    print(f"Player team: {player_team}")
+                        # Recheck just before attacking
+                        if read_memory(process, mappings, attack_address) == ATTACK_RELEASE:
+                            try:
+                                write_memory(process, mappings, attack_address, ATTACK_PRESS)
+                                time.sleep(0.05)
+                            finally:
+                                write_memory(process, mappings, attack_address, ATTACK_RELEASE)
 
-                    if target_team is not None and player_team is not None:
-                        if target_team != player_team:
-                            print("ATTACK")
+            print("\033[H\033[J", end="")
+            print(f"PID:           {process.pid}")
+            print(f"Client base:   0x{client_base:X}")
+            print(f"Player:        0x{player:X}")
+            print()
 
-                else:
-                    print("Target entity: unavailable")
-            else:
-                print("Target entity: none")
+            for name, value in values.items():
+                print(f"{name}: {value}")
 
-            time.sleep(0.5)
+            print(f"Target entity: {hex(target_entity) if target_entity else 'None'}")
+            print(f"Target team:   {target_team}")
+            print(f"Enemy:         {player_team in (2, 3) and target_team in (2, 3) and player_team != target_team}")
+
+            time.sleep(0.1)
+
     finally:
         vmm.close()
 
