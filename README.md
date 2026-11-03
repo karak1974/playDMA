@@ -1,10 +1,10 @@
 # PlayDMA
 
 > [!TIP]
-> Before doing anything with this project I recommend reading the projects it's based on
-[LeechCore](https://github.com/ufrisk/LeechCore)
-[MemProcFS](https://github.com:ufrisk/memprocfs)
-[pcileech](https://github.com:ufrisk/pcileech)
+> Before doing anything with this project I recommend reading the projects it's based on.  
+> [LeechCore](https://github.com/ufrisk/LeechCore)  
+> [MemProcFS](https://github.com:ufrisk/memprocfs)  
+> [pcileech](https://github.com:ufrisk/pcileech)
 
 ## Setup the DMA card
 Install [OpenFPGALoader](https://github.com/trabucayre/openFPGALoader) and download the version for your card from [PCILeech-FPGA](https://github.com/ufrisk/pcileech-fpga), then upload the firmware to the SPI flash. In this example I'm flashing a CaptainDMA 75T.  
